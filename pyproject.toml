@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tidegate"
+version = "0.5.0"
+description = "Route and mix application audio on Linux with PipeWire"
+readme = "README.md"
+keywords = ["audio", "pipewire", "mixer", "routing", "streaming", "virtual-microphone"]
+classifiers = [
+  "Environment :: X11 Applications :: Qt",
+  "Operating System :: POSIX :: Linux",
+  "Topic :: Multimedia :: Sound/Audio :: Mixers",
+]
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = ["PySide6"]
+
+[project.urls]
+Homepage = "https://github.com/OWNER/tidegate"
+Issues = "https://github.com/OWNER/tidegate/issues"
+Changelog = "https://github.com/OWNER/tidegate/blob/main/CHANGELOG.md"
+
+[project.scripts]
+tidegate = "tidegate.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

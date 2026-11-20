@@ -1,0 +1,26 @@
+# Maintainer: OWNER
+pkgname=tidegate
+pkgver=0.5.0
+pkgrel=1
+pkgdesc="Route and mix application audio on Linux with PipeWire"
+arch=('any')
+url="https://github.com/OWNER/tidegate"
+license=('MIT')
+depends=('python' 'pyside6' 'libpulse' 'pipewire-pulse')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('SKIP')   # run `updpkgsums` after tagging the release
+
+package() {
+  cd "$pkgname-$pkgver"
+  install -d "$pkgdir/usr/lib/tidegate" "$pkgdir/usr/bin"
+  cp -r src/tidegate "$pkgdir/usr/lib/tidegate/"
+  find "$pkgdir/usr/lib/tidegate" -name __pycache__ -prune -exec rm -rf {} +
+  install -Dm755 /dev/stdin "$pkgdir/usr/bin/tidegate" <<'EOF'
+#!/usr/bin/env bash
+exec env PYTHONPATH=/usr/lib/tidegate python3 -m tidegate "$@"
+EOF
+  sed 's|@EXEC@|tidegate|' data/tidegate.desktop |
+    install -Dm644 /dev/stdin "$pkgdir/usr/share/applications/tidegate.desktop"
+  install -Dm644 data/tidegate.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/tidegate.svg"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

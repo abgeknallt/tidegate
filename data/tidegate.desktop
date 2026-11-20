@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Name=Tidegate
+GenericName=Audio Router
+Comment=Route and mix application audio with PipeWire
+Exec=@EXEC@
+Icon=tidegate
+Terminal=false
+Categories=AudioVideo;Audio;Mixer;
+Keywords=audio;mixer;routing;pipewire;stream;obs;microphone;
+StartupWMClass=tidegate
+Actions=MuteMics;
+
+[Desktop Action MuteMics]
+Name=Toggle microphone mute
+Exec=@EXEC@ --mic-mute
