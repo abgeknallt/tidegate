@@ -27,5 +27,6 @@ You need PipeWire with `pipewire-pulse`, `pactl`/`parec` (libpulse) and PySide6.
 
 - Keep audio logic in `engine.py` and cover it with a test; the engine is tested
   without a sound server.
-- UI changes: include a screenshot in the pull request.
+- UI changes: include a screenshot in the pull request. Screenshots for the README
+  live in `docs/screenshots` (PNG, about 1000 px wide, no personal data in them).
 - Keep it small and readable; no new dependencies without a good reason.

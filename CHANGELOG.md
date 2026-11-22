@@ -3,6 +3,15 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+- Screenshots in the README (`docs/screenshots`)
+
+### Changed
+- Removed an unused helper and an unused style rule
+- `.gitattributes` keeps line endings consistent and marks screenshots as binary
+
 ## [0.5.2] - 2026-11-22
 
 ### Fixed

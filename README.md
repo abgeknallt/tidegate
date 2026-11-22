@@ -15,8 +15,9 @@
   <img src="https://img.shields.io/badge/PipeWire-required-informational" alt="PipeWire">
 </p>
 
-<!-- Add a screenshot: save it as docs/screenshot.png and uncomment the next line.
-<p align="center"><img src="docs/screenshot.png" alt="Tidegate" width="760"></p> -->
+<p align="center">
+  <img src="docs/screenshots/overview.png" alt="Tidegate: Spotify routed to the speakers and to the virtual microphone" width="820">
+</p>
 
 ## Features
 
@@ -38,6 +39,16 @@
 - Optional: auto-add new apps, connect new inputs to the default output, start at
   login (minimized to the tray).
 - Your board is remembered. All audio changes are undone when you quit.
+
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center" width="33%"><img src="docs/screenshots/add-input.png" alt="Add input menu"><br><sub>Add an app or a microphone</sub></td>
+    <td align="center" width="33%"><img src="docs/screenshots/connect.png" alt="Connect an input to an output"><br><sub>Connect an input to any output</sub></td>
+    <td align="center" width="33%"><img src="docs/screenshots/add-output.png" alt="Add output menu"><br><sub>Pick devices or virtual outputs</sub></td>
+  </tr>
+</table>
 
 ## Install
 

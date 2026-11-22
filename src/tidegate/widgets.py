@@ -132,10 +132,6 @@ def fade_out(widget, done, ms=170):
 
 
 # ---- small builders ------------------------------------------------------------
-def elide(widget, text, width):
-    return widget.fontMetrics().elidedText(text, Qt.ElideRight, width)
-
-
 def tidy(label):
     """Shorten verbose device names: drops (...) and [...] parts and "Controller"."""
     text = re.sub(r"\s*[(\[][^)\]]*[)\]]", "", label)
