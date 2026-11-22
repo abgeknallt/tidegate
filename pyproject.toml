@@ -5,9 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "tidegate"
 version = "0.5.2"
-description = "Route and mix application audio on Linux with PipeWire"
+description = "MIXLINE alternative for Linux: route and mix application audio with PipeWire"
 readme = "README.md"
-keywords = ["audio", "pipewire", "mixer", "routing", "streaming", "virtual-microphone"]
+keywords = ["mixline", "mixline-alternative", "audio", "pipewire", "mixer", "routing", "streaming",
+            "virtual-microphone", "linux"]
 classifiers = [
   "Environment :: X11 Applications :: Qt",
   "Operating System :: POSIX :: Linux",

@@ -7,7 +7,7 @@ Exec=@EXEC@
 Icon=tidegate
 Terminal=false
 Categories=AudioVideo;Audio;Mixer;
-Keywords=audio;mixer;routing;pipewire;stream;obs;microphone;
+Keywords=audio;mixer;mixline;routing;pipewire;stream;obs;microphone;
 StartupWMClass=tidegate
 Actions=MuteMics;
 

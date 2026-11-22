@@ -9,6 +9,8 @@ All notable changes to this project are documented here. The format follows
 - Screenshots in the README (`docs/screenshots`)
 
 ### Changed
+- README rewritten: Tidegate is presented as a MIXLINE alternative for Linux, with a
+  MIXLINE-to-Tidegate comparison table, official Logitech links and a trademark disclaimer
 - Removed an unused helper and an unused style rule
 - `.gitattributes` keeps line endings consistent and marks screenshots as binary
 
