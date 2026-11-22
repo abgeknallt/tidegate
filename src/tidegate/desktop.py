@@ -1,9 +1,20 @@
 """Find .desktop entries so apps can be matched to their real icon. No Qt in here."""
+import glob
 import os
 import shlex
 from pathlib import Path
 
 SKIP = {"flatpak", "env", "sh", "bash", "python", "python3", "snap"}
+# Icon names that describe a category, not an app (apps often report these).
+GENERIC = {"chromium", "chromium-browser", "google-chrome", "chrome", "audio-card", "audio-x-generic",
+           "application-x-executable", "applications-multimedia", "multimedia-audio-player"}
+GENERIC_PREFIXES = ("applications-", "application-x-", "audio-x-", "multimedia-", "media-",
+                    "video-x-", "emblem-", "preferences-")
+
+
+def is_generic(name):
+    name = (name or "").lower()
+    return not name or name in GENERIC or name.startswith(GENERIC_PREFIXES)
 
 
 def data_dirs():
@@ -67,6 +78,31 @@ def build_index(dirs=None):
                 if key and key not in SKIP:
                     index.setdefault(key, icon)
     return index
+
+
+def _rank(path):
+    size = path.parent.parent.name
+    if size == "scalable":
+        return 10_000
+    try:
+        return int(size.split("x")[0])
+    except ValueError:
+        return 0                      # pixmaps
+
+
+def icon_file(name, dirs=None):
+    """Best file for an icon name in hicolor/pixmaps: scalable first, else the largest size.
+    Used when the icon theme does not know a name (typical for Flatpak and Snap apps)."""
+    safe = glob.escape(name)
+    for base in data_dirs() if dirs is None else dirs:
+        best, best_rank = None, -1
+        for pattern in (f"icons/hicolor/*/apps/{safe}.*", f"pixmaps/{safe}.*"):
+            for path in Path(base).glob(pattern):
+                if path.suffix.lower() in (".png", ".svg", ".svgz", ".xpm") and _rank(path) > best_rank:
+                    best, best_rank = path, _rank(path)
+        if best:
+            return str(best)
+    return None
 
 
 def lookup(index, *hints):

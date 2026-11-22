@@ -233,7 +233,8 @@ class Engine:
             p = items[0][1]
             binary = Path(p.get("application.process.binary", "")).name.lower()
             item = Item(key, label, "app", p.get("application.icon_name") or binary,
-                        binary=binary, app_id=p.get("application.id", ""))
+                        binary=binary,
+                        app_id=p.get("application.id") or p.get("pipewire.access.portal.app_id") or "")
             self.known[key] = item
             if key not in board and self.auto_add and key not in self.dismissed:
                 self.add_input(item)

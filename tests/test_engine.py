@@ -230,6 +230,13 @@ class EngineTest(unittest.TestCase):
         entry = next(e for e in eng.board_in if e["key"] == "app:Discord")
         self.assertEqual(entry["binary"], "discord")
 
+    def test_flatpak_apps_report_their_app_id(self):
+        self.fake.state["sink-inputs"] = [{"index": 11, "sink": 1, "owner_module": None, "properties": {
+            "application.name": "Sober", "application.icon_name": "applications-games",
+            "pipewire.access.portal.app_id": "org.vinegarhq.Sober"}}]
+        known, _ = self.engine().scan()
+        self.assertEqual(known["app:Sober"].app_id, "org.vinegarhq.Sober")
+
     def test_unplugged_mic_drops_its_link_but_keeps_the_wiring(self):
         eng = self.board()
         eng.add_conn("mic:usb_mic", STREAM)

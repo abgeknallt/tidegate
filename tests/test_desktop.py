@@ -53,6 +53,27 @@ class DesktopIndexTest(unittest.TestCase):
         self.assertEqual(D.lookup(index, "app"), "user-icon")
         self.assertIsNone(D.lookup(index, "none"))
 
+    def test_generic_icon_names_are_recognized(self):
+        for name in ("applications-games", "applications-multimedia", "audio-x-generic", "chromium", "", None):
+            self.assertTrue(D.is_generic(name), name)
+        for name in ("spotify-client", "org.vinegarhq.Sober", "discord"):
+            self.assertFalse(D.is_generic(name), name)
+
+    def test_icon_file_prefers_scalable_then_largest(self):
+        for size in ("48x48", "256x256", "scalable"):
+            folder = self.root / "icons" / "hicolor" / size / "apps"
+            folder.mkdir(parents=True)
+            (folder / ("app.svg" if size == "scalable" else "app.png")).write_text("x")
+        self.assertTrue(D.icon_file("app", [self.root]).endswith("scalable/apps/app.svg"))
+        (self.root / "icons" / "hicolor" / "scalable" / "apps" / "app.svg").unlink()
+        self.assertTrue(D.icon_file("app", [self.root]).endswith("256x256/apps/app.png"))
+        self.assertIsNone(D.icon_file("missing", [self.root]))
+
+    def test_icon_file_falls_back_to_pixmaps(self):
+        (self.root / "pixmaps").mkdir()
+        (self.root / "pixmaps" / "old.xpm").write_text("x")
+        self.assertTrue(D.icon_file("old", [self.root]).endswith("pixmaps/old.xpm"))
+
     def test_only_the_main_group_is_read(self):
         self.write("x.desktop", "[Desktop Entry]\nName=X\nExec=x\nIcon=x-icon\n"
                    "[Desktop Action New]\nName=New\nExec=x --new\nIcon=other\n")

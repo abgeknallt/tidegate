@@ -1,6 +1,6 @@
 # Maintainer: abgeknallt
 pkgname=tidegate
-pkgver=0.5.1
+pkgver=0.5.2
 pkgrel=1
 pkgdesc="Route and mix application audio on Linux with PipeWire"
 arch=('any')

@@ -3,6 +3,14 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.2] - 2026-11-22
+
+### Fixed
+- Apps that report a generic category icon (for example a gamepad for Sober) now
+  get their real icon, found through the Flatpak app id and the `.desktop` file
+- Icons that the icon theme does not know (Flatpak, Snap) are loaded straight from
+  the `hicolor` and `pixmaps` folders
+
 ## [0.5.1] - 2026-11-21
 
 ### Added
