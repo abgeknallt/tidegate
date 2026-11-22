@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QInputDialog, 
 from .engine import MIC_NAME, STREAM, Item
 from .system import autostart_enabled, set_autostart
 from .widgets import (CARD_W, COLOR_NAMES, IDLE, PALETTE, STYLE, ConnRow, EmptyCard, InputCard, OutputCard,
-                      PillButton, Wires, fade_in, fade_out, glyph, icon_for, menu_header, set_idle, tidy)
+                      PillButton, Wires, fade_in, fade_out, glyph, icon_for, input_icon, menu_header, set_idle, tidy)
 
 
 def menu_text(menu, label):
@@ -144,7 +144,8 @@ class Window(QWidget):
             if items:
                 menu_header(menu, title)
             for it in items:
-                menu.addAction(icon_for(it.icon, it.group), menu_text(menu, it.label)).triggered.connect(
+                menu.addAction(input_icon(it.key, it.label, it.icon, it.binary, it.app_id),
+                               menu_text(menu, it.label)).triggered.connect(
                     lambda _=False, it=it: self._do(self.eng.add_input, it))
         if menu.isEmpty():
             menu.addAction("Nothing to add - play audio in an app first").setEnabled(False)
@@ -204,8 +205,15 @@ class Window(QWidget):
         login.setCheckable(True)
         login.setChecked(autostart_enabled())
         login.triggered.connect(set_autostart)
+        mic = menu.addAction("Use Tidegate Microphone as default mic")
+        mic.setCheckable(True)
+        mic.setChecked(self.eng.default_mic)
+        mic.triggered.connect(self._set_default_mic)
         menu.addSeparator()
         menu.addAction("Quit Tidegate").triggered.connect(lambda _=False: self.quit())
+
+    def _set_default_mic(self, on):
+        self.eng.set_default_mic(bool(on))
 
     def _set_auto_connect(self, on):
         self.eng.auto_connect = bool(on)
@@ -345,8 +353,11 @@ class Window(QWidget):
             card = self.in_cards[key]
             card.set_title(entry.get("name") or entry["label"])
             set_idle(card, not (key in known and known[key].active))
-            bus = eng.buses.get(key)
-            card.source = f"{bus}.monitor" if bus else None
+            if key.startswith("mic:"):
+                card.source = key[4:] if key in known else None
+            else:
+                bus = eng.buses.get(key)
+                card.source = f"{bus}.monitor" if bus else None
             card.sync([o for o in eng.board_out if (key, o) in eng.conns],
                       lambda ok, k=key: self._row(k, ok))
         for key in [k for k in self.in_cards if k not in keys]:

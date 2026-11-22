@@ -77,6 +77,8 @@ class Item:
     sub: str = ""
     volume: int = 100
     active: bool = True
+    binary: str = ""
+    app_id: str = ""
 
 
 class Engine:
@@ -96,6 +98,9 @@ class Engine:
         self.out_colors = {k: v for k, v in (cfg.get("out_colors") or {}).items() if isinstance(v, str)}
         self.out_names = {k: v for k, v in (cfg.get("out_names") or {}).items() if isinstance(v, str)}
         self.mic_muted = False
+        self.default_mic = bool(cfg.get("default_mic", False))
+        self.prev_mic = cfg["prev_mic"] if isinstance(cfg.get("prev_mic"), str) else ""
+        self.mics = set()
         self.dismissed = set()      # apps removed this session (not auto-added again)
         self.modules, self.buses, self.bus_mods = [], {}, {}
         self.links, self.loop, self.applied = {}, {}, {}
@@ -110,6 +115,8 @@ class Engine:
             self._load("module-remap-source", f"master={STREAM}.monitor",
                        f"source_name={MIC_NAME}", props(MIC_LABEL, "source"))
         self.default = pactl("get-default-sink")
+        if self.default_mic:
+            self._apply_default_mic()
         self.board_out = cfg.get("outputs") or [n for n in (self.default, STREAM) if n]
         keys = {e["key"] for e in self.board_in}
         self.conns = {l: s for l, s in self.conns.items() if l[0] in keys and l[1] in self.board_out}
@@ -141,7 +148,8 @@ class Engine:
             "inputs": self.board_in, "outputs": self.board_out, "links": self._links_data(),
             "profiles": self.profiles, "profile": self.profile, "auto_add": self.auto_add,
             "auto_connect": self.auto_connect, "out_colors": self.out_colors,
-            "out_names": self.out_names,
+            "out_names": self.out_names, "default_mic": self.default_mic,
+            "prev_mic": self.prev_mic,
         }, indent=2))
 
     # ---- pactl plumbing ----------------------------------------------------
@@ -157,18 +165,21 @@ class Engine:
         if mod in self.modules:
             self.modules.remove(mod)
 
-    def bus(self, key, label, source=None):
+    def bus(self, key, label):
+        """Null sink that collects one app's streams."""
         if key in self.buses:
             return self.buses[key]
         name = BUS_PREFIX + re.sub(r"\W+", "_", key.lower())
-        mods = [self._load("module-null-sink", f"sink_name={name}", props(f"Tidegate bus - {label}"))]
-        if source:
-            mods.append(self._load("module-loopback", f"source={source}", f"sink={name}",
-                                   "latency_msec=20", "source_dont_move=true",
-                                   "sink_dont_move=true"))
-        self.bus_mods[key] = [m for m in mods if m]
+        mod = self._load("module-null-sink", f"sink_name={name}", props(f"Tidegate bus - {label}"))
+        self.bus_mods[key] = [mod] if mod else []
         self.buses[key] = name
         return name
+
+    def _source(self, key):
+        """What a connection reads from: a microphone directly, or an app's bus."""
+        if key.startswith("mic:"):
+            return key[4:] if key[4:] in self.mics else None
+        return f"{self.buses[key]}.monitor" if key in self.buses else None
 
     def _muted(self, link):
         return self.conns[link]["mute"] or (self.mic_muted and link[1] == STREAM)
@@ -177,7 +188,8 @@ class Engine:
         """Tear down whatever the board no longer wants (removed cards, profile switch)."""
         keys = {e["key"] for e in self.board_in}
         for link in [l for l in self.links if l not in self.conns or l[0] not in keys
-                     or l[1] not in self.board_out or l[1] not in outs]:
+                     or l[1] not in self.board_out or l[1] not in outs
+                     or self._source(l[0]) is None]:
             self.disconnect(*link)
         for key in [k for k in self.buses if k not in keys]:
             for mod in reversed(self.bus_mods.pop(key, [])):
@@ -220,12 +232,16 @@ class Engine:
             key = "app:" + label
             p = items[0][1]
             binary = Path(p.get("application.process.binary", "")).name.lower()
-            item = Item(key, label, "app", p.get("application.icon_name") or binary)
+            item = Item(key, label, "app", p.get("application.icon_name") or binary,
+                        binary=binary, app_id=p.get("application.id", ""))
             self.known[key] = item
             if key not in board and self.auto_add and key not in self.dismissed:
                 self.add_input(item)
                 board = {e["key"]: e for e in self.board_in}
             if key in board:
+                entry = board[key]          # remember what is needed to find the app's icon later
+                for field, value in (("icon", item.icon), ("binary", binary), ("app_id", item.app_id)):
+                    entry[field] = entry.get(field) or value
                 bus = self.bus(key, label)
                 for s, _ in items:
                     if s["sink"] != idx.get(bus):
@@ -237,14 +253,14 @@ class Engine:
             sources[s["name"]] = s["description"]
             key = "mic:" + s["name"]
             self.known[key] = Item(key, s["description"], "mic", "mic")
+        self.mics = set(sources)
         for key, entry in board.items():
             if key.startswith("app:"):
                 self.bus(key, entry["label"])
-            elif key[4:] in sources:
-                self.bus(key, entry["label"], source=key[4:])
 
         for link in list(self.conns):
-            if link[0] in self.buses and link[1] in outs and link[1] in self.board_out:
+            if link[0] in board and self._source(link[0]) and link[1] in outs \
+                    and link[1] in self.board_out:
                 self.connect(*link)
         self.loop = {l: owner[m] for l, m in self.links.items() if m in owner}
         for link, stream in self.loop.items():
@@ -257,9 +273,10 @@ class Engine:
 
     # ---- connections -------------------------------------------------------
     def connect(self, ik, ok):
-        if (ik, ok) in self.links:
+        source = self._source(ik)
+        if (ik, ok) in self.links or not source:
             return
-        mod = self._load("module-loopback", f"source={self.buses[ik]}.monitor",
+        mod = self._load("module-loopback", f"source={source}",
                          f"sink={ok}", "latency_msec=20",
                          "source_dont_move=true", "sink_dont_move=true")
         if mod:
@@ -307,7 +324,8 @@ class Engine:
     def add_input(self, item):
         if any(e["key"] == item.key for e in self.board_in):
             return
-        self.board_in.append({"key": item.key, "label": item.label, "icon": item.icon})
+        self.board_in.append({"key": item.key, "label": item.label, "icon": item.icon,
+                              "binary": item.binary, "app_id": item.app_id})
         if self.auto_connect and item.group == "app" and self.default in self.board_out:
             self.conns[(item.key, self.default)] = {"vol": 100, "mute": False}
         self.save()
@@ -351,6 +369,25 @@ class Engine:
         self.out_colors[key] = color
         self.save()
 
+    def set_default_mic(self, on):
+        """Make Tidegate Microphone the system's default input (restored on exit)."""
+        self.default_mic = on
+        if on:
+            self._apply_default_mic()
+        else:
+            self._restore_default_mic()
+        self.save()
+
+    def _apply_default_mic(self):
+        current = pactl("get-default-source")
+        if current and current != MIC_NAME:
+            self.prev_mic = current
+        pactl("set-default-source", MIC_NAME)
+
+    def _restore_default_mic(self):
+        if self.prev_mic:
+            pactl("set-default-source", self.prev_mic)
+
     def set_default(self, sink):
         pactl("set-default-sink", sink)
         self.default = sink
@@ -389,5 +426,7 @@ class Engine:
 
     def close(self):
         self.save()
+        if self.default_mic:
+            self._restore_default_mic()
         for mod in reversed(self.modules):
             pactl("unload-module", mod)

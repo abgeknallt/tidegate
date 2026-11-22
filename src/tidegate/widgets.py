@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (QFrame, QGraphicsOpacityEffect, QHBoxLayout, QLab
                                QPushButton, QSizePolicy, QSlider, QToolButton, QVBoxLayout, QWidget,
                                QWidgetAction)
 
+from .icons import find_app_icon
+
 CARD_W = 340
 PALETTE = ["#8b5cf6", "#f4975a", "#2fd6b0", "#ec4899", "#60a5fa", "#facc15"]
 COLOR_NAMES = ["Violet", "Orange", "Teal", "Pink", "Blue", "Yellow"]
@@ -95,6 +97,13 @@ def icon_for(name, group):
             return themed
         return glyph("app")
     return glyph(name if name in GLYPHS else {"mic": "mic", "virtual": "virtual"}.get(group, "speaker"))
+
+
+def input_icon(key, label, icon="", binary="", app_id=""):
+    """Microphones get our glyph; apps get their real icon (or a colored letter tile)."""
+    if key.startswith("mic:"):
+        return glyph("mic")
+    return find_app_icon(label, icon, binary, app_id)
 
 
 # ---- animation helpers ----------------------------------------------------------
@@ -363,9 +372,9 @@ class InputCard(QFrame):
         self.setObjectName("card")
         self.setFixedWidth(CARD_W)
         self.key, self.on_hover, self.rows, self.source = entry["key"], on_hover, {}, None
-        group = "mic" if self.key.startswith("mic:") else "app"
         icon = QLabel()
-        icon.setPixmap(icon_for(entry.get("icon"), group).pixmap(20, 20))
+        icon.setPixmap(input_icon(self.key, entry["label"], entry.get("icon", ""),
+                                  entry.get("binary", ""), entry.get("app_id", "")).pixmap(22, 22))
         self.title = ElidedLabel()
         self.title.setObjectName("title")
         self.set_title(entry.get("name") or entry["label"])

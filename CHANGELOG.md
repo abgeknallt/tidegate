@@ -3,6 +3,20 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.1] - 2026-11-21
+
+### Added
+- Real app icons, resolved through the icon theme and installed `.desktop` files
+  (including Flatpak and Snap); a colored letter tile when nothing matches
+- Settings option to use Tidegate Microphone as the system default microphone
+  (the previous default is restored on exit)
+- `tidegate --diagnose` prints the audio setup for bug reports
+
+### Changed
+- Microphones are connected directly to their outputs instead of through an extra
+  bus and loopback, which is more reliable
+- A microphone that is unplugged and plugged back in reconnects by itself
+
 ## [0.5.0] - 2026-11-20
 
 First public release.

@@ -47,6 +47,8 @@ class FakePactl:
             return str(self.next_module)
         if args[0] == "get-default-sink":
             return "speakers"
+        if args[0] == "get-default-source":
+            return "usb_mic"
         return ""
 
     def plist(self, kind):
@@ -138,6 +140,10 @@ class EngineTest(unittest.TestCase):
             eng.add_conn(*link)
         eng.scan()
         self.assertEqual(len(eng.links), 3)
+        loopbacks = [c for c in self.fake.calls if c[:2] == ("load-module", "module-loopback")]
+        self.assertTrue(any("source=usb_mic" in c and f"sink={STREAM}" in c for c in loopbacks),
+                        "a microphone is wired directly to its output, without an extra hop")
+        self.assertNotIn("mic:usb_mic", eng.buses)
         self.assertTrue(any(c[0] == "move-sink-input" and c[1] == "10" for c in self.fake.calls))
         self.fake.show_loopbacks(eng)
         eng.scan()
@@ -208,6 +214,35 @@ class EngineTest(unittest.TestCase):
         eng.auto_add = True
         eng.scan()
         self.assertEqual([e["key"] for e in eng.board_in], ["app:Discord"])
+
+    def test_default_mic_is_applied_and_restored(self):
+        eng = self.engine()
+        eng.set_default_mic(True)
+        self.assertIn(("set-default-source", MIC), self.fake.calls)
+        self.assertEqual(eng.prev_mic, "usb_mic")
+        self.fake.calls.clear()
+        eng.close()
+        self.assertIn(("set-default-source", "usb_mic"), self.fake.calls)
+        self.assertTrue(self.engine().default_mic)         # stays on for the next start
+
+    def test_app_entries_remember_icon_hints(self):
+        eng = self.board()
+        entry = next(e for e in eng.board_in if e["key"] == "app:Discord")
+        self.assertEqual(entry["binary"], "discord")
+
+    def test_unplugged_mic_drops_its_link_but_keeps_the_wiring(self):
+        eng = self.board()
+        eng.add_conn("mic:usb_mic", STREAM)
+        eng.scan()
+        self.assertIn(("mic:usb_mic", STREAM), eng.links)
+        self.fake.state["sources"] = [s for s in self.fake.state["sources"] if s["name"] != "usb_mic"]
+        eng.scan()
+        eng.scan()
+        self.assertNotIn(("mic:usb_mic", STREAM), eng.links)
+        self.assertIn(("mic:usb_mic", STREAM), eng.conns)
+        self.fake.state["sources"].append({"name": "usb_mic", "description": "USB Mic"})
+        eng.scan()
+        self.assertIn(("mic:usb_mic", STREAM), eng.links)
 
     def test_old_or_broken_config_never_crashes(self):
         for text in ('{"links": [["a", "b"]], "hidden": ["x"]}', "[1, 2, 3]", "not json", "{}"):

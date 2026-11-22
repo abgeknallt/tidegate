@@ -5,7 +5,7 @@ Thanks for helping! Bug reports and pull requests are welcome.
 ## Setup
 
 ```sh
-git clone https://github.com/OWNER/tidegate && cd tidegate
+git clone https://github.com/abgeknallt/tidegate && cd tidegate
 PYTHONPATH=src python -m tidegate          # run from the source tree
 python -m unittest discover -s tests -v    # run the tests
 ```
@@ -20,6 +20,7 @@ You need PipeWire with `pipewire-pulse`, `pactl`/`parec` (libpulse) and PySide6.
 | `src/tidegate/widgets.py` | Cards, rows, meters, wires, theme |
 | `src/tidegate/window.py` | Main window and menus |
 | `src/tidegate/tray.py`, `control.py`, `meters.py`, `system.py` | Tray, single-instance + CLI control, level meters, autostart |
+| `src/tidegate/icons.py`, `desktop.py` | App icon lookup: icon theme, `.desktop` files, letter tile |
 | `tests/` | Engine tests against a fake `pactl` |
 
 ## Guidelines

@@ -26,8 +26,8 @@ body:
   - type: textarea
     id: audio
     attributes:
-      label: Audio server info
-      description: Output of `pactl info` and `pipewire --version`
+      label: Diagnostics
+      description: Output of `tidegate --diagnose`
       render: text
     validations:
       required: true

@@ -1,10 +1,10 @@
-# Maintainer: OWNER
+# Maintainer: abgeknallt
 pkgname=tidegate
-pkgver=0.5.0
+pkgver=0.5.1
 pkgrel=1
 pkgdesc="Route and mix application audio on Linux with PipeWire"
 arch=('any')
-url="https://github.com/OWNER/tidegate"
+url="https://github.com/abgeknallt/tidegate"
 license=('MIT')
 depends=('python' 'pyside6' 'libpulse' 'pipewire-pulse')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
