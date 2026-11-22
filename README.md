@@ -13,6 +13,7 @@
   <a href="https://github.com/abgeknallt/tidegate/actions/workflows/ci.yml"><img src="https://github.com/abgeknallt/tidegate/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/abgeknallt/tidegate/releases"><img src="https://img.shields.io/github/v/release/abgeknallt/tidegate" alt="Latest release"></a>
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license">
+  <img src="https://img.shields.io/badge/platform-Linux-lightgrey" alt="Linux">
   <img src="https://img.shields.io/badge/audio-PipeWire-informational" alt="PipeWire">
 </p>
 
@@ -22,12 +23,17 @@
 
 <p align="center">
   <a href="#why-tidegate">Why</a> ·
+  <a href="#requirements">Requirements</a> ·
   <a href="#install">Install</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#coming-from-mixline">Coming from MIXLINE</a> ·
-  <a href="#shortcuts">Shortcuts</a> ·
-  <a href="#troubleshooting">Troubleshooting</a>
+  <a href="#commands">Commands</a> ·
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#troubleshooting">Troubleshooting</a> ·
+  <a href="#contributing">Contributing</a>
 </p>
+
+> **Status:** Tidegate is young and moves fast. Bug reports are extra valuable right now — see [Troubleshooting](#troubleshooting).
 
 ## Why Tidegate
 
@@ -35,39 +41,62 @@
 and outputs, connect them, set a volume per connection, and stream or record the
 result. Logitech's [download page](https://www.logitechg.com/en-us/software/mixline) offers it for Windows only.
 
-Tidegate brings that idea to Linux. It runs on PipeWire, needs no driver and no
-root, and puts everything on one board: inputs on the left, outputs on the right,
-a wire for every connection.
+Tidegate brings that idea to Linux. It runs on PipeWire, needs no driver, no root and
+no system install, and puts everything on one board: inputs on the left, outputs on
+the right, a wire for every connection.
 
-- **Per-connection volume and mute.** One input can feed several outputs, each with
-  its own level: Discord loud in your headphones, silent on stream.
-- **You decide every connection.** Nothing is wired for you unless you turn it on.
-  Move connections between outputs, rename outputs, pick wire colors.
-- **Virtual microphone.** *Tidegate Stream* doubles as an input called
-  **Tidegate Microphone** that Discord, browsers and games list as a normal mic.
-- **Live level meters** on every input and output.
-- **Profiles.** Save the whole board (Gaming, Stream, Call) and switch in one click.
-- **System tray** with mute status, quick mute and profile menu.
-- **Real app icons** for Spotify, Discord, browsers and games.
-- **Global shortcuts** through a small command line interface.
+| | |
+| --- | --- |
+| **Per-connection volume and mute** | One input can feed several outputs, each with its own level: Discord loud in your headphones, silent on stream. |
+| **You decide every connection** | Nothing is wired for you unless you turn it on. Move connections between outputs, rename outputs, pick wire colors. |
+| **Virtual microphone** | *Tidegate Stream* doubles as an input called **Tidegate Microphone** that Discord, browsers and games list as a normal mic. |
+| **Live level meters** | On every input and output. |
+| **Profiles** | Save the whole board (Gaming, Stream, Call) and switch in one click. |
+| **System tray** | With mute status, quick mute and profile menu. |
+| **Real app icons** | For Spotify, Discord, browsers and games. |
+| **Global shortcuts** | Through a small command line interface. |
+
+### Privacy and permissions
+
+- **No network.** Tidegate talks to nothing but your local sound server.
+- **No root, no daemon.** Just `pactl` and `parec` in your user session.
+- **Nothing is left behind.** Every module Tidegate loaded is unloaded again on exit.
+- **MIT-licensed.** Forks, packaging, commercial use: all fine.
+
+## Requirements
+
+- Linux with PipeWire and `pipewire-pulse` enabled (default on CachyOS, Arch, Fedora and Ubuntu 22.10+)
+- `pactl` and `parec` (package `libpulse` or `pulseaudio-utils`)
+- Python 3.10 or newer
+- PySide6
+
+Check your setup:
+
+```sh
+pactl info | grep "Server Name"   # should read "PulseAudio (on PipeWire …)"
+command -v pactl parec
+python3 --version
+```
 
 ## Install
-
-You need PipeWire with `pipewire-pulse` (default on CachyOS, Arch, Fedora and
-Ubuntu 22.10+), `pactl` and `parec` (package `libpulse` or `pulseaudio-utils`), and
-PySide6.
 
 ```sh
 git clone https://github.com/abgeknallt/tidegate && cd tidegate
 ./install.sh              # for your user, to ~/.local
 ./install.sh --system     # system-wide, to /usr/local
-./install.sh --uninstall
+./install.sh --uninstall  # remove it again
 ```
 
 On Arch-based systems the installer installs missing dependencies with pacman. On
 other distributions install `pactl`/`parec` and PySide6 first, then run
-`./install.sh --no-deps`. Make sure `~/.local/bin` is in your `PATH`. An Arch
-`PKGBUILD` is in [`packaging/arch`](packaging/arch).
+`./install.sh --no-deps`. Make sure `~/.local/bin` is in your `PATH`.
+
+An Arch `PKGBUILD` is in [`packaging/arch`](packaging/arch). To skip installing
+entirely, run straight from the source tree:
+
+```sh
+PYTHONPATH=src python -m tidegate
+```
 
 ## Quick start
 
@@ -78,9 +107,11 @@ other distributions install `pactl`/`parec` and PySide6 first, then run
    should hear to **Tidegate Stream**, then pick **Tidegate Microphone** as the
    input device in Discord, your browser or any other app.
 
-Do not route the app that *receives* a call into Tidegate Stream, or the other side
-hears itself. An app is listed once it has opened an audio stream, for example when
-a video is playing. After you add it, it stays on the board, dimmed while idle.
+> **Important:** Do not route the app that *receives* a call into Tidegate Stream, or
+> the other side hears itself.
+
+An app is listed once it has opened an audio stream, for example when a video is
+playing. After you add it, it stays on the board, dimmed while idle.
 
 <table>
   <tr>
@@ -106,7 +137,7 @@ The concepts carry over; the names are close on purpose.
 Tidegate is not a port or a copy of MIXLINE; it is an independent project with its
 own code.
 
-## Shortcuts
+## Commands
 
 Wayland does not let apps grab global keys, so Tidegate exposes commands that you
 bind in your desktop's shortcut settings (KDE: *System Settings → Keyboard →
@@ -127,6 +158,24 @@ output, use Tidegate Microphone as the default microphone, and start at login.
 ## How it works
 
 Tidegate only uses `pactl` and `parec`: no daemon, no root.
+
+```
+ Microphone ──────────────────────────────┐
+                                          │
+ App stream ──▶ Null sink (per-app bus) ──┼──▶ module-loopback ──▶ Output device
+                      │                   │    (20 ms, one per wire,
+                      │                   │     own volume slider)
+                      │                   │
+                      ▼                   │
+               Tidegate Stream (null sink)│
+                      │ monitor           │
+                      ▼                   │
+               module-remap-source        │
+                      │                   │
+                      ▼                   │
+               Tidegate Microphone ◀──────┘
+               (listed in apps as a normal mic)
+```
 
 - Each app on the board gets a null sink (its "bus") that collects its streams.
   Microphones are read directly.
@@ -171,7 +220,7 @@ python -m unittest discover -s tests -v     # tests (no sound server needed)
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) © the Tidegate contributors.
 
 ## Disclaimer
 
